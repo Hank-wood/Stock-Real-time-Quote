@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<script type="text/javascript" src="/under.js"></script>
+	<title> Real</title>
+</head>
+
+<style>
+#canvas{
+	position: relative;
+	left: 30%;
+}
+</style>
+<body>
+
+<form >
+<input type="text" name="search"  id="search"/>
+<input type="button" value="req" onclick="send()"/>
+<p id="input">输入查询股票名称或代码</p> 
+</form>
+
+<div  id="main">
+	<canvas id="canvas"  width=450 height=350></canvas>
+</div>
+<p id="p">213</p>
+<p id="p1">mm</p>
+<form >
+<input type="text" name="user"  id="user"/>
+
+<p id="submit">Add</p>
+</form>
+<p id="up">forward</p>
+<p id="down">backward</p>
+</body>
+<script>
+
+
+
+//var posX=[0,1,2,3,4,5,6,7,8,9];
+var labelx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var labely = [66, 706, 515, -96, 147, 1000, 359, 920, 148, 477];
+var labely0=[];
+var moving=false;
+var aver,min,max,distant;
+var point=0;
+var data = {
+		"time": labelx,
+		"value": labely,
+		"rate":0
+	}
+
+function send () {
+	if (window.XMLHttpRequest) {
+		var xmlhttprequest=new XMLHttpRequest();
+	}
+	else if (window.ActiveXObject) {
+		try{
+			var xmlhttprequest=new ActiveXObject("Msxm12.XMLHTTP");
+		}
+		catch(e){
+			try{
+				var xmlhttprequest=new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			catch(e)
+			{
+				alert("not support");
+			}
+		}
+	};
+	xmlhttprequest.open("POST","http://192.168.1.104:3002",true);
+	xmlhttprequest.onreadystatechange=response;
+	var qu=document.getElementById('search').value;
+	xmlhttprequest.send(qu);
+	var xhrdata;
+	function response () {
+		if (xmlhttprequest.readyState==4) {
+			if (xmlhttprequest.status==200||xmlhttprequest==0) {
+				var data=xmlhttprequest.responseText;
+				var obj=eval("("+data+")");
+				xhrdata=obj.data;
+				var time=[];
+				var index=[];
+				var rate=[];
+				for(var i=0;i<xhrdata.length;i++){	
+					index.push(xhrdata[i].index);
+					rate.push(xhrdata[i].rate);
+					time.push(xhrdata[i].time);
+				}
+				data.rate=rate;
+				data.time=time;
+				data.value=index;
+				labelx=time;
+				labely=index;
+				begin();	
+			}
+		};
+	}
+}
+
+
+window.onload=function  (argument) {
+	//posX=_.map(posX,function  (x) {		return x* 40 + 40 ;})	
+	if (window.XMLHttpRequest) {
+		var xmlhttprequest=new XMLHttpRequest();
+	}
+	else if (window.ActiveXObject) {
+		try{
+			var xmlhttprequest=new ActiveXObject("Msxm12.XMLHTTP");
+		}
+		catch(e){
+			try{
+				var xmlhttprequest=new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			catch(e)
+			{
+				alert("not support");
+			}
+		}
+	};
+	xmlhttprequest.open("POST","http://192.168.1.104:3002",true);
+	xmlhttprequest.onreadystatechange=response;
+	xmlhttprequest.send(null);
+	var xhrdata;
+	function response () {
+		if (xmlhttprequest.readyState==4) {
+			if (xmlhttprequest.status==200||xmlhttprequest==0) {
+				var data=xmlhttprequest.responseText;
+				var obj=eval("("+data+")");
+				xhrdata=obj.data;
+				var time=[];
+				var index=[];
+				var rate=[];
+				for(var i=0;i<xhrdata.length;i++){	
+					index.push(xhrdata[i].index);
+					rate.push(xhrdata[i].rate);
+					time.push(xhrdata[i].time);
+				}
+			//	alert(rate[0])
+				data.rate=rate;
+				data.time=time;
+				data.value=index;
+				labelx=time;
+				labely=index;
+				begin();	
+			}
+		};
+	}
+}
+
+
+
+
+
+
+function begin () {
+	
+
+	labely=_.map(labely,function  (x) {	return parseFloat(x); })
+	labely0 = sort(labely);
+                aver = average(labely0);
+                min = labely0[0] -2
+	max =labely0[labely0.length - 1]+1; 
+                distant =(max - min) / 10;
+             document.getElementById('p1').innerHTML="min:"+min+'\n'+"max:"+max+'\n'+"aver:"+aver+'\n'+'distant:'+distant+'\n'+labely
+	labely0 = [];//zuo biao zhou
+	for (var i = 0; i <= 9; i++) {
+		labely0.push(min + i * distant);
+	}
+                labely0=_.map(labely0,function  (x) {	return x.toFixed(2); })
+	draw();
+	// body...
+}
+function mapped(arr) {
+	return _.map(arr, function(n) {
+		var k = -270 / (labely0[labely0.length - 1] - labely0[0]);
+		b = 300 - k * labely0[0];
+		return k * n + b;
+	})
+}
+
+function sort(arr) {
+	return _.sortBy(arr, function(n) {
+		return n;
+	})
+}
+
+function average(arr) {
+	var sum = _.reduce(arr, function(x, y) {
+		return x + y;
+	});
+	return sum / _.size(arr);
+}
+function rads(x) {
+	return Math.PI * x / 180;
+}
+
+
+document.getElementById('submit').onclick = function(argument) {
+	
+	labely.push(labely[labely.length-1]+0.05);
+	data.value=labely;
+//	posX.push(posX[posX.length-1]+40);
+	/*
+var posX=[0,1,2,3,4,5,6,7,8,9];
+posX=_.map(posX,function  (x) {
+		return x* 40 + 40 ;
+	})*/	
+
+                 /*
+	if (newData >= max || newData <= min) {
+		labely0 = sort(labely);
+		aver = average(labely0);
+		min = Math.round(labely0[0] - aver*1.2);
+		max = Math.round(labely0[labely0.length - 1] + aver*1.2);
+		distant = Math.round((max - min) / (_.size(labely0)));
+		labely0 = [];
+		for (var i = 0; i <= 9; i++) {
+			labely0.push(min + i * distant);
+		}
+
+	};*/
+	draw();
+
+}
+
+
+function draw(evX,evY) {
+	data.value=labely;
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext('2d');
+	context.clearRect(0, 0, 450, 350);
+	context.fillStyle = "rgba(60%,60%,100%,0.7)";
+	context.fillRect(0, 0, 450, 350);
+	context.fillStyle = "rgba(60%,60%,100%,0.5)";
+	context.fillRect(30, 30, 400, 270);
+	context.font = "bold 10pt sans-serif";
+
+
+	//    document.getElementById('p').innerHTML=x+"   "+y+"  "+context.isPointInPath(x, y);
+	if (evX>= 30 && evX <= 430 && evY >= 30 && evY <= 300) {
+		context.beginPath();
+		context.moveTo(30, evY);
+		context.lineTo(430, evY);
+		context.moveTo(evX, 300);
+		context.lineTo(evX, 30);
+		context.strokeStyle = "black";
+		context.stroke();
+	};
+
+
+
+	for (var iy = point; iy <= 9+point; iy++) {
+		var y = 300 - (iy-point)* 30;
+		context.beginPath();
+		context.lineWidth = 0.3;
+		context.strokeStyle = "black";
+		context.strokeText(labely0[iy-point], 5, y + 5);
+		//context.strokeText(labelx[iy], posX[iy]-2, 320);
+		context.moveTo(20, y);
+		context.lineTo(430, y);
+		context.strokeStyle = "grey";
+		context.stroke();
+	};
+	//x 20~430   y 30~300    v-91~431  -91---->
+	var mapdata = mapped(data.value);
+	var find = false;
+	var index;
+	for (var iy = 0; iy <=mapdata.length-1; iy++) {
+		context.beginPath();
+		context.arc(iy*1.6+40, mapdata[iy], 1, 0, rads(360), false);
+		if (context.isPointInPath(evX, evY) && find == false) {
+			find = true;
+			index = iy;
+		}
+		if (find) {
+			context.fillStyle = "red";
+			context.fillRect(evX, evY, 45, 45);
+			context.fillStyle = "green";
+			context.font = "1px sans-serif";
+			context.fillText(data.value[index], evX + 15, evY + 25);
+			context.stroke();
+		};
+		context.moveTo(iy*1.6+40, mapdata[iy]);
+		context.lineTo(iy*1.6+41, mapdata[iy + 1]);
+		context.fillStyle = "#aaa";
+		context.fill();
+		context.lineWidth = 1;
+		context.strokeStyle = "black";
+		context.stroke();
+	};
+//	document.getElementById('p').innerHTML = evX + "   " + evY + "  " + context.isPointInPath(evX, evY) + find;
+}
+
+document.getElementById('canvas').onmousemove = function(event) {
+	var canvas = document.getElementById('canvas');
+	var bb = canvas.getBoundingClientRect();
+	var x = (event.clientX - bb.left) * (canvas.width / bb.width);
+	var y = (event.clientY - bb.top) * (canvas.height / bb.height);
+	draw(x, y);
+}
+
+document.getElementById('up').onclick=function  () {
+	point=point-1;
+	var evY = event.clientY;
+	var evX = event.clientX;
+	moving=true;
+	
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext('2d');
+	var offsetX = 0;
+	var offserTime = function() {
+		if (offsetX <= 40) {
+			offsetX = offsetX + 2;
+			context.clearRect(0, 0, 450, 350);
+			context.fillStyle = "rgba(60%,60%,100%,0.7)";
+			context.fillRect(0, 0, 450, 350);
+			context.fillStyle = "rgba(60%,60%,100%,0.5)";
+			context.fillRect(30, 30, 400, 270);
+			context.font = "bold 10pt sans-serif";
+
+			for (var iy = point; iy <= 9+point; iy++) {
+				var y = 300 - (iy-point)* 30;
+				context.beginPath();
+				context.lineWidth = 0.3;
+				context.strokeStyle = "black";
+				context.strokeText(labely0[iy-point], 5, y + 5);
+				//context.strokeText(labelx[iy], posX[iy]-offsetX, 320);
+				context.moveTo(20, y);
+				context.lineTo(430, y);
+				context.strokeStyle = "grey";
+				context.stroke();
+			};
+			context.rect(30, 30, 400, 350);
+			context.clip();
+                                                
+                                                for (var iy = point-1; iy <= 9+point+1; iy++) {
+				var y = 300 - (iy-point)* 30;
+				context.beginPath();
+				context.lineWidth = 0.3;
+				context.strokeStyle = "black";
+				context.strokeText(labelx[iy], posX[iy]+offsetX, 320);
+				context.moveTo(20, y);
+				context.lineTo(430, y);
+				context.strokeStyle = "grey";
+				context.stroke();
+			};
+
+
+			
+			
+			//x 20~430   y 30~300    v-91~431  -91---->	
+			var mapdata = mapped(data.value);
+			var find = false;
+			var index;
+			mapdata=_.map(mapdata,function  (n) {
+				return Math.round(n);
+			})
+
+
+			for (var iy = point-1; iy <=point+ 9+1; iy++) {
+				context.beginPath();
+				context.arc(posX[iy]+ offsetX, mapdata[iy], 8, 0, rads(360), false);
+				if (context.isPointInPath(evX, evY) && find == false) {
+					find = true;
+					index = iy;
+				}
+				if (find) {
+					context.fillStyle = "red";
+					context.fillRect(evX, evY, 45, 45);
+					context.fillStyle = "green";
+					context.font = "1px sans-serif";
+					context.fillText(data.value[index], evX + 15, evY + 25);
+					context.stroke();
+				};
+				context.moveTo(posX[iy]+ offsetX, mapdata[iy]);
+				context.lineTo(posX[iy+1] + offsetX, mapdata[iy + 1]);
+				context.fillStyle = "#aaa";
+				context.fill();
+				context.lineWidth = 3;
+				context.strokeStyle = "black";
+				context.stroke();
+			};
+
+			setTimeout(offserTime, 30)
+		}
+		else{
+			moving=false;
+			posX=_.map(posX,function  (x) {
+				return  x+40;
+			})
+		}
+	}
+	setTimeout(offserTime, 500);
+}
+
+
+document.getElementById('down').onclick=function  () {
+	point=point+1;
+	var evY = event.clientY;
+	var evX = event.clientX;
+	moving=true;
+	
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext('2d');
+	var offsetX = 0;
+	var offserTime = function() {
+		if (offsetX <= 40) {
+			offsetX = offsetX + 2;
+			context.clearRect(0, 0, 450, 350);
+			context.fillStyle = "rgba(60%,60%,100%,0.7)";
+			context.fillRect(0, 0, 450, 350);
+			context.fillStyle = "rgba(60%,60%,100%,0.5)";
+			context.fillRect(30, 30, 400, 270);
+			context.font = "bold 10pt sans-serif";
+
+			for (var iy = point; iy <= 9+point; iy++) {
+				var y = 300 - (iy-point)* 30;
+				context.beginPath();
+				context.lineWidth = 0.3;
+				context.strokeStyle = "black";
+				context.strokeText(labely0[iy-point], 5, y + 5);
+				//context.strokeText(labelx[iy], posX[iy]-offsetX, 320);
+				context.moveTo(20, y);
+				context.lineTo(430, y);
+				context.strokeStyle = "grey";
+				context.stroke();
+			};
+			context.rect(30, 30, 400, 350);
+			context.clip();
+                                                
+                                                for (var iy = point-1; iy <= 9+point+1; iy++) {
+				var y = 300 - (iy-point)* 30;
+				context.beginPath();
+				context.lineWidth = 0.3;
+				context.strokeStyle = "black";
+				context.strokeText(labelx[iy], posX[iy]-offsetX, 320);
+				context.moveTo(20, y);
+				context.lineTo(430, y);
+				context.strokeStyle = "grey";
+				context.stroke();
+			};
+
+			//x 20~430   y 30~300    v-91~431  -91---->	
+			var mapdata = mapped(data.value);
+			var find = false;
+			var index;
+			mapdata=_.map(mapdata,function  (n) {
+				return Math.round(n);
+			})
+
+
+			for (var iy = point-1; iy <=point+ 9+1; iy++) {
+				context.beginPath();
+				context.arc(posX[iy]- offsetX, mapdata[iy], 8, 0, rads(360), false);
+				if (context.isPointInPath(evX, evY) && find == false) {
+					find = true;
+					index = iy;
+				}
+				if (find) {
+					context.fillStyle = "red";
+					context.fillRect(evX, evY, 45, 45);
+					context.fillStyle = "green";
+					context.font = "1px sans-serif";
+					context.fillText(data.value[index], evX + 15, evY + 25);
+					context.stroke();
+				};
+				context.moveTo(posX[iy]- offsetX, mapdata[iy]);
+				context.lineTo(posX[iy+1] -offsetX, mapdata[iy + 1]);
+				context.fillStyle = "#aaa";
+				context.fill();
+				context.lineWidth = 3;
+				context.strokeStyle = "black";
+				context.stroke();
+			};
+
+			setTimeout(offserTime, 30)
+		}
+		else{
+			moving=false;
+			posX=_.map(posX,function  (x) {
+				return  x-40;
+			})
+		}
+	}
+	setTimeout(offserTime, 500);
+}
+</script>
+</html>
